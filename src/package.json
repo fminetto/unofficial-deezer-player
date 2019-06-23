@@ -1,0 +1,35 @@
+{
+  "name": "deezer-unofficial-player",
+  "version": "1.0.0",
+  "description": "A electron built deezer player",
+  "main": "app.js",
+  "author": "Felipe Minetto<fminetto44@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/fminetto/unofficial-deezer-player",
+  "scripts": {
+    "start": "electron .",
+    "build:linux": "node_modules/.bin/electron-builder . --linux snap deb tar.xz AppImage",
+    "build:snap": "node_modules/.bin/electron-builder . --linux snap",
+    "build:deb": "node_modules/.bin/electron-builder . --linux deb",
+    "build:tar": "node_modules/.bin/electron-builder . --linux tar.xz",
+    "build:appimg": "node_modules/.bin/electron-builder . --linux AppImage",
+    "build:mac": "node_modules/.bin/electron-builder . --mac dmg pkg mas"
+  },
+  "build": {
+    "appId": "com.electron.unofficialdeezer.app",
+    "productName": "Unofficial Deezer Player",
+    "linux": {
+      "target": "snap",
+      "icon": "./assets/dist_icon.png",
+      "synopsis": "Unofficial Deezer client app",
+      "category": "Audio"
+    }
+  },
+  "devDependencies": {
+    "electron": "^5.0.4",
+    "electron-builder": "^20.44.4"
+  },
+  "dependencies": {
+    "path": "^0.12.7"
+  }
+}
