@@ -1,6 +1,6 @@
 {
   "name": "deezer-unofficial-player",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A electron built deezer player",
   "main": "app.js",
   "author": "Felipe Minetto<fminetto44@gmail.com>",
@@ -19,7 +19,6 @@
     "appId": "com.electron.unofficialdeezer.app",
     "productName": "Unofficial Deezer Player",
     "linux": {
-      "target": "snap",
       "icon": "./assets/dist_icon.png",
       "synopsis": "Unofficial Deezer client app",
       "category": "Audio"

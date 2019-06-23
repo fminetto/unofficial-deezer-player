@@ -9,5 +9,6 @@ A unofficial Deezer player for Linux.
 * System tray icon
 * Background music play
 * Media keys support
+* Connection check
 
 [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/deezer-unofficial-player)
