@@ -23,6 +23,9 @@ function createWin() {
     win.setMenuBarVisibility(false)
     win.loadURL("https://deezer.com");
     win.webContents.on('did-fail-load', (e, errCode, errMessage)=>{
+        //On some systems, this error occurs without explanation
+        if(errCode == -3)
+            return false;
         console.error(errCode, errMessage);
         dialog.showErrorBox("Load failed", `Please check your connection`);
         isQuit = true;
