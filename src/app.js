@@ -1,7 +1,7 @@
 const path = require('path'),
     consvol = 0.05,
     electron = require('electron'),
-    { app, BrowserWindow, Menu, Tray, globalShortcut } = electron,
+    { app, BrowserWindow, Menu, Tray, globalShortcut, dialog } = electron,
     disticon = path.join(__dirname, 'assets', 'dist_icon.png'),
     trayicon = path.join(__dirname, 'assets', 'dist_icon.png');
 let win, tray, isQuit = false;
@@ -16,10 +16,21 @@ function createWin() {
         icon: disticon,
         webPreferences: {
             devTools: false
-        }
+        },
+        backgroundColor: '#2e2c29',
+        show:false
     });
     win.setMenuBarVisibility(false)
     win.loadURL("https://deezer.com");
+    win.webContents.on('did-fail-load', (e, errCode, errMessage)=>{
+        console.error(errCode, errMessage);
+        dialog.showErrorBox("Load failed", `Please check your connection`);
+        isQuit = true;
+        app.quit(-1);
+    })
+    win.on('ready-to-show', ()=>{
+        win.show();
+    })
     win.on("close", event => {
         if (!isQuit) {
             event.preventDefault();
@@ -36,7 +47,7 @@ function register_mediaKeys() {
     });
 
     globalShortcut.register('mediaplaypause', () => {
-        win.webContents.executeJavaScript("dzPlayer.playing?dzPlayer.control.pause():dzPlayer.control.play()");
+        win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
     });
 
     globalShortcut.register('mediaprevioustrack', () => {
@@ -45,7 +56,6 @@ function register_mediaKeys() {
 }
 
 function update_tray() {
-    //TODO: Add favorite and unfavorite song
     let model = [{
         label: "Controls",
         enabled: false
@@ -53,7 +63,7 @@ function update_tray() {
         label: "Play/Pause",
         enabled: true,
         click: () => {
-            win.webContents.executeJavaScript("dzPlayer.playing?dzPlayer.control.pause():dzPlayer.control.play()");
+            win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
         }
     }, {
         label: "Next",
@@ -66,6 +76,12 @@ function update_tray() {
         enabled: true,
         click: () => {
             win.webContents.executeJavaScript("dzPlayer.control.prevSong()");
+        }
+    }, {
+        label: "Unfavourite/Favourite",
+        enabled: true,
+        click: () => {
+            win.webContents.executeJavaScript("document.querySelectorAll('.player-bottom .track-actions button')[2].click();");
         }
     },{
         label: "Volume",
