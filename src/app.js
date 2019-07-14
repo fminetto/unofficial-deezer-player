@@ -15,12 +15,12 @@ function createWin() {
         title: "Deezer Player",
         icon: disticon,
         webPreferences: {
-            devTools: false
+            //devTools: false
         },
         backgroundColor: '#2e2c29',
         show:false
     });
-    win.setMenuBarVisibility(false)
+    win.setMenuBarVisibility(false);
     win.loadURL("https://deezer.com");
     win.webContents.on('did-fail-load', (e, errCode, errMessage)=>{
         //On some systems, this error occurs without explanation
@@ -128,3 +128,6 @@ function update_tray() {
 }
 
 app.on('ready', createWin)
+app.on('browser-window-created', (e, window)=>{
+    window.setMenuBarVisibility(false);
+})
