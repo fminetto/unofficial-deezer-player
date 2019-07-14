@@ -6,7 +6,6 @@ const path = require('path'),
     trayicon = path.join(__dirname, 'assets', 'dist_icon.png');
 let win, tray, isQuit = false;
 function createWin() {
-    register_mediaKeys();
     let { width, height } = electron.screen.getPrimaryDisplay().workAreaSize;
     tray = new Tray(trayicon)
     win = new BrowserWindow({
@@ -15,23 +14,23 @@ function createWin() {
         title: "Deezer Player",
         icon: disticon,
         webPreferences: {
-            //devTools: false
+            devTools: false
         },
         backgroundColor: '#2e2c29',
-        show:false
+        show: false
     });
     win.setMenuBarVisibility(false);
     win.loadURL("https://deezer.com");
-    win.webContents.on('did-fail-load', (e, errCode, errMessage)=>{
+    win.webContents.on('did-fail-load', (e, errCode, errMessage) => {
         //On some systems, this error occurs without explanation
-        if(errCode == -3)
+        if (errCode == -3)
             return false;
         console.error(errCode, errMessage);
         dialog.showErrorBox("Load failed", `Please check your connection`);
         isQuit = true;
         app.quit(-1);
     })
-    win.on('ready-to-show', ()=>{
+    win.on('ready-to-show', () => {
         win.show();
     })
     win.on("close", event => {
@@ -41,21 +40,23 @@ function createWin() {
             return false;
         }
     })
+    register_mediaKeys();
     update_tray();
 }
 
 function register_mediaKeys() {
-    globalShortcut.register('medianexttrack', () => {
-        win.webContents.executeJavaScript("dzPlayer.control.nextSong()");
-    });
-
-    globalShortcut.register('mediaplaypause', () => {
-        win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
-    });
-
-    globalShortcut.register('mediaprevioustrack', () => {
-        win.webContents.executeJavaScript("dzPlayer.control.prevSong()");
-    });
+    if (!globalShortcut.isRegistered("medianexttrack"))
+        globalShortcut.register('medianexttrack', () => {
+            win.webContents.executeJavaScript("dzPlayer.control.nextSong()");
+        });
+    if (!globalShortcut.isRegistered("mediaplaypause"))
+        globalShortcut.register('mediaplaypause', () => {
+            win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
+        });
+    if (!globalShortcut.isRegistered("mediaprevioustrack"))
+        globalShortcut.register('mediaprevioustrack', () => {
+            win.webContents.executeJavaScript("dzPlayer.control.prevSong()");
+        });
 }
 
 function update_tray() {
@@ -86,7 +87,7 @@ function update_tray() {
         click: () => {
             win.webContents.executeJavaScript("document.querySelectorAll('.player-bottom .track-actions button')[2].click();");
         }
-    },{
+    }, {
         label: "Volume",
         enabled: false
     }, {
@@ -114,7 +115,8 @@ function update_tray() {
         label: "Show Window",
         enabled: true,
         click: () => {
-            win.restore();
+            if (!win.isVisible())
+                win.restore();
         }
     }, {
         label: "Quit",
@@ -124,10 +126,14 @@ function update_tray() {
             app.quit()
         }
     }];
+    tray.on("click", () => {
+        if (!win.isVisible())
+            win.restore();
+    })
     tray.setContextMenu(new Menu.buildFromTemplate(model))
 }
 
 app.on('ready', createWin)
-app.on('browser-window-created', (e, window)=>{
+app.on('browser-window-created', (e, window) => {
     window.setMenuBarVisibility(false);
 })
