@@ -1,47 +1,26 @@
 const path = require('path'),
-    consvol = 0.05,
+    Datastore = require('nedb'),
+    { Window } = require('./utils/window'),
+    consvol = 0.10,
     electron = require('electron'),
-    { app, BrowserWindow, Menu, Tray, globalShortcut, dialog } = electron,
-    disticon = path.join(__dirname, 'assets', 'dist_icon.png'),
+    { app, Menu, Tray, globalShortcut } = electron,
     trayicon = path.join(__dirname, 'assets', 'dist_icon.png');
-let win, tray, isQuit = false;
-function createWin() {
-    let { width, height } = electron.screen.getPrimaryDisplay().workAreaSize;
-    tray = new Tray(trayicon)
-    win = new BrowserWindow({
-        width: width,
-        height: height,
-        title: "Deezer Player",
-        icon: disticon,
-        webPreferences: {
-            devTools: false
-        },
-        backgroundColor: '#2e2c29',
-        show: false
-    });
-    win.setMenuBarVisibility(false);
-    win.loadURL("https://deezer.com");
-    win.webContents.on('did-fail-load', (e, errCode, errMessage) => {
-        //On some systems, this error occurs without explanation
-        if (errCode == -3)
-            return false;
-        console.error(errCode, errMessage);
-        dialog.showErrorBox("Load failed", `Please check your connection`);
-        isQuit = true;
-        app.quit(-1);
-    })
-    win.on('ready-to-show', () => {
-        win.show();
-    })
-    win.on("close", event => {
-        if (!isQuit) {
-            event.preventDefault();
-            win.hide();
-            return false;
+
+let cfgId, url, win, tray, db = new Datastore({ filename: `${app.getPath('userData')}/deezer.db`, autoload: true });
+
+async function createWin() {
+    db.findOne({}, (err, data) => {
+        err && console.warn(err.message)
+        if (data) {
+            url = data.loadURL
+            cfgId = data._id
+            if(url.indexOf("deezer.com") < 0) url = undefined
         }
+        tray = new Tray(trayicon)
+        win = new Window(app, url, electron.screen.getPrimaryDisplay().workAreaSize);
+        register_mediaKeys();
+        update_tray();
     })
-    register_mediaKeys();
-    update_tray();
 }
 
 function register_mediaKeys() {
@@ -122,7 +101,8 @@ function update_tray() {
         label: "Quit",
         enabled: true,
         click: () => {
-            isQuit = true;
+            saveData();
+            win.destroy()
             app.quit()
         }
     }];
@@ -137,3 +117,17 @@ app.on('ready', createWin)
 app.on('browser-window-created', (e, window) => {
     window.setMenuBarVisibility(false);
 })
+
+async function saveData() {
+    if (cfgId) {
+        await db.update({
+            _id: cfgId
+        }, {
+                $set: {
+                    loadURL: win.webContents.getURL()
+                }
+            })
+    } else {
+        await db.insert({ loadURL: win.webContents.getURL() })
+    }
+}
