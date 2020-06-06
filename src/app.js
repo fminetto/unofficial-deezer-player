@@ -20,7 +20,7 @@ function createWin() {
         show: false
     });
     win.setMenuBarVisibility(false);
-    win.loadURL("https://deezer.com",{userAgent: 'Chrome'});
+    win.loadURL("https://deezer.com",{userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36'});
     win.webContents.on('did-fail-load', (e, errCode, errMessage) => {
         //On some systems, this error occurs without explanation
         if (errCode == -3)
