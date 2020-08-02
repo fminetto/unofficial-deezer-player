@@ -3,12 +3,17 @@ const path = require('path'),
     { Window } = require('./utils/window'),
     consvol = 0.10,
     electron = require('electron'),
-    { app, Menu, Tray, globalShortcut } = electron,
+    { app, Menu, Tray, globalShortcut, session } = electron,
     trayicon = path.join(__dirname, 'assets', 'dist_icon.png');
+process.env.userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36';
 
 let cfgId, url, win, tray, db = new Datastore({ filename: `${app.getPath('userData')}/deezer.db`, autoload: true });
 
 async function createWin() {
+    session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+        details.requestHeaders['User-Agent'] = process.env.userAgent;
+        callback({ cancel: false, requestHeaders: details.requestHeaders })
+    });
     db.findOne({}, (err, data) => {
         err && console.warn(err.message)
         if (data) {

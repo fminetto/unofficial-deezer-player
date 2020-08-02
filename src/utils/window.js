@@ -1,6 +1,5 @@
 const path = require('path'),
     { BrowserWindow, dialog } = require('electron');
-
 class Window extends BrowserWindow {
     constructor(app, url, { width, height }) {
         let params = {
@@ -17,7 +16,7 @@ class Window extends BrowserWindow {
         };
         super(params);
         this.setMenuBarVisibility(false);
-        this.loadURL(url || "https://deezer.com", { userAgent: 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:79.0) Gecko/20100101 Firefox/79.0' });
+        this.loadURL(url || "https://deezer.com", { userAgent: process.env.userAgent });
         this._app = app;
         this.createEvents();
     }
