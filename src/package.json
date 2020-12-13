@@ -1,6 +1,6 @@
 {
     "name": "deezer-unofficial-player",
-    "version": "1.1.7",
+    "version": "1.1.8",
     "description": "A electron built deezer player",
     "main": "app.js",
     "author": "Felipe Minetto<fminetto44@gmail.com>",
@@ -25,8 +25,8 @@
         }
     },
     "devDependencies": {
-        "electron": "^9.1.2",
-        "electron-builder": "^22.8.0"
+        "electron": "^11.1.0",
+        "electron-builder": "^22.9.1"
     },
     "dependencies": {
         "nedb": "^1.8.0",

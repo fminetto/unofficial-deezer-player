@@ -9,7 +9,8 @@ class Window extends BrowserWindow {
             icon: path.join(__dirname, '..', 'assets', 'dist_icon.png'),
             webPreferences: {
                 nativeWindowOpen: true,
-                devTools: false
+                devTools: false,
+                contextIsolation: false
             },
             backgroundColor: '#2e2c29',
             show: false
