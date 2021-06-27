@@ -192,7 +192,7 @@ player.on('pause', function () {
 player.on('play', function () {
     win.webContents.executeJavaScript("dzPlayer.control.play();");
 })
-player.on('play', function () {
+player.on('playpause', function () {
     win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
 })
 player.on('loopStatus', function () {
