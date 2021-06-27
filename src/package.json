@@ -30,6 +30,7 @@
     },
     "dependencies": {
         "nedb": "^1.8.0",
+        "mpris-service": "^1.1.4",
         "path": "^0.12.7"
     }
 }
