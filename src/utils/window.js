@@ -41,6 +41,16 @@ class Window extends BrowserWindow {
             this.hide();
             return false;
         })
+        this.on("blur", event => {
+            this.webContents.executeJavaScript(`
+            document.getElementById("dzr-app").style = "display: none;";
+            `);
+        })
+        this.on("focus", event => {
+            this.webContents.executeJavaScript(`
+            document.getElementById("dzr-app").style = "display: block;";
+            `);
+        })
     }
 }
 
