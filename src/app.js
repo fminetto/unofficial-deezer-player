@@ -9,6 +9,8 @@ process.env.userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHT
 
 let cfgId, url, win, tray, db = new Datastore({ filename: `${app.getPath('userData')}/deezer.db`, autoload: true });
 
+let singleton = null
+
 async function createWin() {
     session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
         details.requestHeaders['User-Agent'] = process.env.userAgent;
@@ -23,6 +25,7 @@ async function createWin() {
         }
         tray = new Tray(trayicon)
         win = new Window(app, url, electron.screen.getPrimaryDisplay().workAreaSize);
+        singleton = win;
         register_mediaKeys();
         update_tray();
     })
@@ -118,7 +121,22 @@ function update_tray() {
     tray.setContextMenu(new Menu.buildFromTemplate(model))
 }
 
-app.on('ready', createWin)
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+    app.quit()
+} else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        // Someone tried to run a second instance, we should focus our window.
+        if (singleton) {
+            if (singleton.isMinimized() || !singleton.isVisible()) singleton.restore()
+            singleton.focus()
+        }
+    })
+
+    app.on('ready', createWin)
+}
+
 app.on('browser-window-created', (e, window) => {
     window.setMenuBarVisibility(false);
 })
