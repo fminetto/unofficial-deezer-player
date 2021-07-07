@@ -11,6 +11,7 @@ app.commandLine.appendSwitch('disable-features', 'MediaSessionService');
 
 let cfgId, url, win, tray, db = new Datastore({ filename: `${app.getPath('userData')}/deezer.db`, autoload: true });
 
+let singleton = null
 const player = Player({
     name: 'Deezer',
     identity: 'Deezer media player',
@@ -33,6 +34,7 @@ async function createWin() {
         }
         tray = new Tray(trayicon)
         win = new Window(app, url, electron.screen.getPrimaryDisplay().workAreaSize);
+        singleton = win;
         register_mediaKeys();
         update_tray();
         init_player_mpris();
@@ -138,7 +140,22 @@ function update_tray() {
     tray.setContextMenu(new Menu.buildFromTemplate(model))
 }
 
-app.on('ready', createWin)
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+    app.quit()
+} else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        // Someone tried to run a second instance, we should focus our window.
+        if (singleton) {
+            if (singleton.isMinimized() || !singleton.isVisible()) singleton.restore()
+            singleton.focus()
+        }
+    })
+
+    app.on('ready', createWin)
+}
+
 app.on('browser-window-created', (e, window) => {
     window.setMenuBarVisibility(false);
 })
