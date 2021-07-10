@@ -8,6 +8,7 @@ class Window extends BrowserWindow {
             title: "Deezer Player",
             icon: path.join(__dirname, '..', 'assets', 'dist_icon.png'),
             webPreferences: {
+                nodeIntegration: true,
                 nativeWindowOpen: true,
                 devTools: false,
                 contextIsolation: false
