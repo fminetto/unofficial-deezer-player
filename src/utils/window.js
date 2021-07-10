@@ -72,9 +72,6 @@ class Window extends BrowserWindow {
         if (optimize) {
             this.on("blur", this.blur_window);
             this.on("focus", this.focus_window);
-            if (this.blur) {
-                this.blur_window();
-            }
         }else{
             this.removeListener("blur", this.blur_window);
             this.removeListener("focus", this.focus_window);
