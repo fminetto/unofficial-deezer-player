@@ -109,20 +109,6 @@ function update_tray() {
         label: "APP",
         enabled: false
     }, {
-        label: "Show Window",
-        enabled: true,
-        click: () => {
-            if (!win.isVisible())
-                win.restore();
-        }
-    }, {
-        label: "Hide Window",
-        enabled: true,
-        click: () => {
-            if (win.isVisible())
-                win.hide();
-        }
-    }, {
         label: "Quit",
         enabled: true,
         click: () => {
