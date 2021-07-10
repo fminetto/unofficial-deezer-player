@@ -9,7 +9,7 @@ const path = require('path'),
 process.env.userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36';
 app.commandLine.appendSwitch('disable-features', 'MediaSessionService');
 
-let cfgId, url, win, tray, db = new Datastore({ filename: `${app.getPath('userData')}/deezer.db`, autoload: true });
+let cfgId, is_optimized = false, url, win, tray, db = new Datastore({ filename: `${app.getPath('userData')}/deezer.db`, autoload: true });
 
 let singleton = null
 const player = Player({
@@ -30,10 +30,12 @@ async function createWin() {
         if (data) {
             url = data.loadURL
             cfgId = data._id
+            is_optimized = data.optimize
             if (url.indexOf("deezer.com") < 0) url = undefined
         }
         tray = new Tray(trayicon)
         win = new Window(app, url, electron.screen.getPrimaryDisplay().workAreaSize);
+        win.set_optimize(is_optimized);
         singleton = win;
         register_mediaKeys();
         update_tray();
@@ -108,6 +110,16 @@ function update_tray() {
     }, {
         label: "APP",
         enabled: false
+    }, {
+        label: "Optimize app",
+        type : "checkbox",
+        checked : is_optimized,
+        enabled: true,
+        click: event => {
+            is_optimized = event.checked;
+            win.set_optimize(is_optimized);
+            saveData();
+        }
     }, {
         label: "Quit",
         enabled: true,
@@ -291,10 +303,10 @@ async function saveData() {
             _id: cfgId
         }, {
             $set: {
-                loadURL: win.webContents.getURL()
+                loadURL: win.webContents.getURL(), optimize: is_optimized
             }
         })
     } else {
-        await db.insert({ loadURL: win.webContents.getURL() })
+        await db.insert({ loadURL: win.webContents.getURL(), optimize: is_optimized })
     }
 }
