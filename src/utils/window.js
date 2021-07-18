@@ -1,7 +1,7 @@
 const path = require('path'),
     { BrowserWindow, dialog } = require('electron');
 class Window extends BrowserWindow {
-    constructor(app, url, { width, height }) {
+    constructor(app, url, { width, height }, settings) {
         let params = {
             width,
             height,
@@ -10,8 +10,9 @@ class Window extends BrowserWindow {
             webPreferences: {
                 nodeIntegration: true,
                 nativeWindowOpen: true,
-                devTools: false,
-                contextIsolation: false
+                //devTools: false,
+                contextIsolation: false,
+                preload: path.join(app.getAppPath(), "settings", "injection.js")
             },
             backgroundColor: '#2e2c29',
             show: false
@@ -20,6 +21,7 @@ class Window extends BrowserWindow {
         this.setMenuBarVisibility(false);
         this.loadURL(url || "https://deezer.com", { userAgent: process.env.userAgent });
         this._app = app;
+        this._settings = settings;
         this.createEvents();
     }
 
@@ -37,9 +39,13 @@ class Window extends BrowserWindow {
             this.show();
         })
         this.on("close", event => {
-            event.preventDefault();
-            this.hide();
-            return false;
+            if (this._settings.get_attribute("closeToTray") == "true") {
+                event.preventDefault();
+                this.hide();
+                return false;
+            } else {
+                this.webContents.send("quit");
+            }
         })
     }
 }

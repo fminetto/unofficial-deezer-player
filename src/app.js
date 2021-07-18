@@ -1,6 +1,8 @@
 const path = require('path'),
     Datastore = require('nedb'),
+    fs = require('fs'),
     { Window } = require('./utils/window'),
+    { Settings } = require('./settings/settings'),
     consvol = 0.10,
     Player = require('mpris-service'),
     electron = require('electron'),
@@ -10,6 +12,8 @@ process.env.userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHT
 app.commandLine.appendSwitch('disable-features', 'MediaSessionService');
 
 let cfgId, url, win, tray, db = new Datastore({ filename: `${app.getPath('userData')}/deezer.db`, autoload: true });
+
+let settings = new Settings();
 
 let singleton = null
 const player = Player({
@@ -33,7 +37,7 @@ async function createWin() {
             if (url.indexOf("deezer.com") < 0) url = undefined
         }
         tray = new Tray(trayicon)
-        win = new Window(app, url, electron.screen.getPrimaryDisplay().workAreaSize);
+        win = new Window(app, url, electron.screen.getPrimaryDisplay().workAreaSize, settings);
         singleton = win;
         register_mediaKeys();
         update_tray();
@@ -297,6 +301,19 @@ ipcMain.on('readDZRepeat', function(event, data){
           player.loopStatus = "Track";
           break;
   };
+});
+// To initialize settings graphically
+ipcMain.on("requestSettings", (event, arg) => {
+    event.sender.send("receiveSettings", settings.preferences);
+});
+// To set setting whenever there is a change
+ipcMain.on("setSetting", (event, key, value) => {
+    settings.set_attribute(key, value)
+});
+ipcMain.on("quit", () => {
+    saveData();
+    win.destroy()
+    app.quit()
 });
 
 async function saveData() {
