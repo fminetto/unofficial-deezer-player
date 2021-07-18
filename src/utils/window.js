@@ -10,7 +10,7 @@ class Window extends BrowserWindow {
             webPreferences: {
                 nodeIntegration: true,
                 nativeWindowOpen: true,
-                //devTools: false,
+                devTools: false,
                 contextIsolation: false,
                 preload: path.join(app.getAppPath(), "settings", "injection.js")
             },
