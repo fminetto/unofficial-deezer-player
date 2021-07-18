@@ -46,7 +46,7 @@ function init_settings_javacript() {
 
             // Proceeds with injection
             if (injected) {
-                document.getElementById('app_settings').style.display = '';
+                document.getElementById('app_settings').style = null;
                 let other_div = document.getElementById('page_content');
                 for (let i = 0, len = other_div.childElementCount; i < len; i++) {
                     if (other_div.childNodes[i].id != "app_settings") {
@@ -80,7 +80,7 @@ function init_settings_javacript() {
             profile_button.addEventListener('click', pollAccountPopper);
 
             // Hook also search bar
-            // but how???
+            // but how?
 
             hook_custom_onclick();
         });
@@ -133,18 +133,15 @@ function pollDOM() {
 }
 
 function onclick_redirect(e) {
-    // If href is the same, just restore content
-    if (window.location.href == this.href) {
-        let other_div = document.getElementById('page_content');
-        for (let i = 0, len = other_div.childElementCount; i < len; i++) {
-            if (other_div.childNodes[i].id != "app_settings") {
-                other_div.childNodes[i].style.display = '';
-            }
-        }
-    }
     let app_settings = document.getElementById('app_settings');
     if (app_settings != null) {
         app_settings.style.display = 'none';
+    }
+    let other_div = document.getElementById('page_content');
+    for (let i = 0, len = other_div.childElementCount; i < len; i++) {
+        if (other_div.childNodes[i].id != "app_settings") {
+            other_div.childNodes[i].style = null;
+        }
     }
 }
 
