@@ -37,9 +37,22 @@ function init_settings_javacript() {
     let settings_button = document.getElementById("injected_settings");
     if (settings_button != null) {
         settings_button.addEventListener('click', () => {
+            // Removes highlight from sidebar
+            let sidebar = document.getElementById("page_sidebar")
+            let active_links = sidebar.getElementsByClassName("is-active");
+            for (let i = 0, len = active_links.length; i < len; i++) {
+                active_links[i].classList.remove('is-active');
+            }
+
+            // Proceeds with injection
             if (injected) {
                 document.getElementById('app_settings').style.display = '';
-                document.getElementById('page_content').lastChild.style.display = 'none';
+                let other_div = document.getElementById('page_content');
+                for (let i = 0, len = other_div.childElementCount; i < len; i++) {
+                    if (other_div.childNodes[i].id != "app_settings") {
+                        other_div.childNodes[i].style.display = 'none';
+                    }
+                }
                 return;
             }
 
@@ -120,6 +133,15 @@ function pollDOM() {
 }
 
 function onclick_redirect(e) {
+    // If href is the same, just restore content
+    if (window.location.href == this.href) {
+        let other_div = document.getElementById('page_content');
+        for (let i = 0, len = other_div.childElementCount; i < len; i++) {
+            if (other_div.childNodes[i].id != "app_settings") {
+                other_div.childNodes[i].style.display = '';
+            }
+        }
+    }
     let app_settings = document.getElementById('app_settings');
     if (app_settings != null) {
         app_settings.style.display = 'none';
