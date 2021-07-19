@@ -39,13 +39,13 @@ async function createWin() {
         tray = new Tray(trayicon)
         win = new Window(app, url, electron.screen.getPrimaryDisplay().workAreaSize, settings);
         singleton = win;
-        register_mediaKeys();
-        update_tray();
-        init_player_mpris();
+        registerMediaKeys();
+        updateTray();
+        initPlayerMpris();
     })
 }
 
-function register_mediaKeys() {
+function registerMediaKeys() {
     if (!globalShortcut.isRegistered("medianexttrack"))
         globalShortcut.register('medianexttrack', () => {
             win.webContents.executeJavaScript("dzPlayer.control.nextSong()");
@@ -60,7 +60,7 @@ function register_mediaKeys() {
         });
 }
 
-function update_tray() {
+function updateTray() {
     let model = [{
         label: "Controls",
         enabled: false
@@ -164,7 +164,7 @@ app.on('browser-window-created', (e, window) => {
     window.setMenuBarVisibility(false);
 })
 
-function init_player_mpris() {
+function initPlayerMpris() {
     // Start at position 0
     player.seeked(0);
     // Bind the deezer events to the mpris datas
@@ -308,7 +308,7 @@ ipcMain.on("requestSettings", (event, arg) => {
 });
 // To set setting whenever there is a change
 ipcMain.on("setSetting", (event, key, value) => {
-    settings.set_attribute(key, value)
+    settings.setAttribute(key, value)
 });
 ipcMain.on("quit", () => {
     saveData();

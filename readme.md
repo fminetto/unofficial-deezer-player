@@ -22,3 +22,7 @@ To generate an executable file run this commands:
 > See the package.json file to see which script you should run. The generated files will bu available in src/dist directory.
 
 [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/deezer-unofficial-player)
+
+# Contribution
+
+Before contributing please follow [naming conventions](https://www.w3schools.com/js/js_conventions.asp)

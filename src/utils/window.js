@@ -10,7 +10,7 @@ class Window extends BrowserWindow {
             webPreferences: {
                 nodeIntegration: true,
                 nativeWindowOpen: true,
-                devTools: false,
+                devTools: true,
                 contextIsolation: false,
                 preload: path.join(app.getAppPath(), "settings", "injection.js")
             },
@@ -20,8 +20,8 @@ class Window extends BrowserWindow {
         super(params);
         this.setMenuBarVisibility(false);
         this.loadURL(url || "https://deezer.com", { userAgent: process.env.userAgent });
-        this._app = app;
-        this._settings = settings;
+        this.app = app;
+        this.settings = settings;
         this.createEvents();
     }
 
@@ -33,13 +33,13 @@ class Window extends BrowserWindow {
             console.error(errCode, errMessage);
             dialog.showErrorBox("Load failed", `Please check your connection`);
             this.destroy()
-            this._app.quit(-1);
+            this.app.quit(-1);
         })
         this.on('ready-to-show', () => {
             this.show();
         })
         this.on("close", event => {
-            if (this._settings.get_attribute("closeToTray") == "true") {
+            if (this.settings.getAttribute("closeToTray") == "true") {
                 event.preventDefault();
                 this.hide();
                 return false;

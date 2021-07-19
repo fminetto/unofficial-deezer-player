@@ -11,7 +11,7 @@ const defaults = {
 
 class Settings {
     constructor() {
-        this.preferences_file = path.join(app.getPath('userData'), filename);
+        this.preferencesFile = path.join(app.getPath('userData'), filename);
 
         // Try to load user's preferences
         this.load();
@@ -20,7 +20,7 @@ class Settings {
     save() {
         let json = JSON.stringify(this.preferences);
 
-        fs.writeFile(this.preferences_file, json, 'utf-8', (err) => {
+        fs.writeFile(this.preferencesFile, json, 'utf-8', (err) => {
             if (err) {
                 console.error(err)
                 return;
@@ -35,12 +35,12 @@ class Settings {
         // user will be forced to use default settings
         this.preferences = defaults;
 
-        fs.access(this.preferences_file, (err) => {
+        fs.access(this.preferencesFile, (err) => {
             if (err) {
                 // Either file is inaccessible or doesn't exist
                 return
             }
-            fs.readFile(this.preferences_file, 'utf-8', (err, data) => {
+            fs.readFile(this.preferencesFile, 'utf-8', (err, data) => {
                 if (err) {
                     console.error(err)
                     return
@@ -56,12 +56,12 @@ class Settings {
         });
     }
 
-    set_attribute(key, value) {
+    setAttribute(key, value) {
         this.preferences[key] = value;
         this.save();
     }
 
-    get_attribute(key) {
+    getAttribute(key) {
         return this.preferences[key];
     }
 }

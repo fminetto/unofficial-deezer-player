@@ -3,4 +3,4 @@ HOW TO ADD CUSTOM SETTINGS:
 1. Add html to settings.html, it's preferable to match id with the variable
 2. Add settings.js's defaults variable
 3. Edit settings-deezer.js don't forget initialization and binding the event properly
-4. Add whatever logic you like :) just see settings.js's methods set_attribute and get_attribute
+4. Add whatever logic you like :) just see settings.js's methods setAttribute and getAttribute
