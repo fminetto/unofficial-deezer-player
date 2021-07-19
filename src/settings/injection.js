@@ -81,7 +81,12 @@ function initSettingsJavacript() {
             profile_button.addEventListener('click', pollAccountPopper);
 
             // Hook also search bar
-            // but how?
+            let searchBar = document.getElementsByClassName('topbar-search-form')[0];
+            searchBar.addEventListener('submit', onclickHideSettings);
+
+            // Hook search history
+            let searchInput = document.getElementById('topbar-search');
+            searchInput.addEventListener('focus', pollSearchHistory);
 
             bindLinks();
         });
@@ -119,7 +124,7 @@ function pollAccountPopper() {
     }
 }
 
-function onclickHideSettings(e) {
+function onclickHideSettings() {
     let app_settings = document.getElementById('app_settings');
     if (app_settings != null) {
         app_settings.style.display = 'none';
@@ -135,6 +140,16 @@ function changeContentVisiblity(hide) {
         if (pageContent.childNodes[i].id != "app_settings") {
             pageContent.childNodes[i].style.display = visibility;
         }
+    }
+}
+
+function pollSearchHistory() {
+    let topbarSearch = document.getElementsByClassName('topbar-search')[0];
+    let searchCategory = document.getElementsByClassName('search-category')[0]
+    if (searchCategory != null) {
+        bindLinks();
+    } else {
+        setTimeout(pollSearchHistory, 100);
     }
 }
 
