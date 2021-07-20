@@ -12,6 +12,7 @@ const defaults = {
 class Settings {
     constructor() {
         this.preferencesFile = path.join(app.getPath('userData'), filename);
+        this.callbacks = {};
 
         // Try to load user's preferences
         this.load();
@@ -56,13 +57,25 @@ class Settings {
         });
     }
 
+    /**
+     * Sets preference key and launches callback if any is set
+     * @param {*} key 
+     * @param {*} value 
+     */
     setAttribute(key, value) {
         this.preferences[key] = value;
         this.save();
+        if (key in this.callbacks) {
+            this.callbacks[key]();
+        }
     }
 
     getAttribute(key) {
         return this.preferences[key];
+    }
+
+    setCallback(key, callback) {
+        this.callbacks[key] = callback;
     }
 }
 

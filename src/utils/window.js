@@ -1,5 +1,6 @@
 const path = require('path');
 const { BrowserWindow, dialog } = require('electron');
+const LazyReader = require('./lazy_reader');
 
 class Window extends BrowserWindow {
     constructor(app, url, { width, height }, settings) {
@@ -24,6 +25,11 @@ class Window extends BrowserWindow {
         this.app = app;
         this.settings = settings;
         this.createEvents();
+        
+        this.setOptimize();
+        this.settings.setCallback("optimizeApp", () => {
+            this.setOptimize();
+        });
     }
 
     createEvents() {
@@ -50,29 +56,30 @@ class Window extends BrowserWindow {
         })
     }
 
-    set_optimize(optimize) {
-        if (optimize) {
-            this.on("blur", this.blur_window);
-            this.on("focus", this.focus_window);
-        }else{
-            this.removeListener("blur", this.blur_window);
-            this.removeListener("focus", this.focus_window);
+    setOptimize() {
+        if (this.settings.getAttribute("optimizeApp") == 'true') {
+            this.addListener("blur", this.blurWindow);
+            this.addListener("focus", this.focusWindow);
+        } else {
+            this.removeListener("blur", this.blurWindow);
+            this.removeListener("focus", this.focusWindow);
             if (this.blur) {
-                this.focus_window();
+                this.focusWindow();
             }
         }
     }
 
-    blur_window = function() {
-        this.webContents.executeJavaScript(`
-        
-        `);
+    blurWindow() {
+        LazyReader.get(path.join("..", "optimization", "blur.js"), (data) => {
+            this.webContents.executeJavaScript(data);
+        });
     }
 
-    focus_window = function() {
-        this.webContents.executeJavaScript(`
-        `);
+    focusWindow() {
+        LazyReader.get(path.join("..", "optimization", "focus.js"), (data) => {
+            this.webContents.executeJavaScript(data);
+        });
     }
 }
 
-module.exports = { Window };
+module.exports = Window;

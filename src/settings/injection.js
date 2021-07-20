@@ -2,22 +2,15 @@ const electron = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { ipcRenderer } = require('electron');
+const LazyReader = require('../utils/lazy_reader');
 
 let injected = false;
 
 // Gets called first
 function pollTopbar() {
-    const topbar = document.getElementById("page_topbar");
-    if (topbar != null &&
-        (settingsElement.content !== null && settingsElement.content !== undefined) &&
-        (settings.content !== null && settings.content !== undefined)
-    ) {
-        if (settingsElement.content == "error" || settings.content == "error") {
-            console.error("An error while reading files occured");
-            return;
-        }
+    let topbar = document.getElementById("page_topbar");
+    if (topbar != null) {
         inject(topbar);
-        // initSettingsJavascript()
     } else {
         setTimeout(pollTopbar, 100);
     }
@@ -27,11 +20,13 @@ function pollTopbar() {
 function inject(topbar) {
     let poppers = topbar.getElementsByClassName("popper-wrapper");
     if (topbar != null && poppers != null && poppers.length > 1 && poppers[1] != null) {
-        let div = document.createElement("div");
-        div.className = "popper-wrapper topbar-action";
-        div.innerHTML = settingsElement.content;
-        topbar.insertBefore(div, poppers[1]);
-        initSettingsJavacript();
+        LazyReader.getOnce(path.join("..", "settings", "settings-element.html"), (data) => {
+            let div = document.createElement("div");
+            div.className = "popper-wrapper topbar-action";
+            div.innerHTML = data;
+            topbar.insertBefore(div, poppers[1]);
+            initSettingsJavacript();
+        });
     } else {
         console.warn("There's nowhere to put settings button");
     }
@@ -65,16 +60,22 @@ function initSettingsJavacript() {
             }
 
             // Prevents destroying DOM events and adds settings
-            let container = document.createElement('div');
-            container.innerHTML = settings.content;
+            LazyReader.getOnce(path.join("..", "settings", "settings.html"), (data) => {
+                let container = document.createElement('div');
+                container.innerHTML = data;
 
-            while (container.firstChild) {
-                pageContent.appendChild(container.firstChild);
-            }
+                while (container.firstChild) {
+                    pageContent.appendChild(container.firstChild);
+                }
+            });
 
             // Create script that takes care of settings    
-            readFile("settings_deezer.js", settingsJavascript);
-            injectSettingsJavascript();
+            LazyReader.getOnce(path.join("..", "settings", "settings_deezer.js"), (data) => {
+                let script = document.createElement("script");
+                script.setAttribute("type", "text/javascript");
+                script.innerHTML = data;
+                document.body.appendChild(script);
+            });
 
             // If user clicks on profile and generates more <a> tags, we need to hook those new as well
             let profile_button = document.getElementsByClassName("topbar-profile")[0];
@@ -92,18 +93,6 @@ function initSettingsJavacript() {
         });
     } else {
         console.warn("Unable to show settings currently");
-    }
-}
-
-// Appends script that takes care of settings 
-function injectSettingsJavascript() {
-    if (settingsJavascript.content != null) {
-        let script = document.createElement("script");
-        script.setAttribute("type", "text/javascript");
-        script.innerHTML = settingsJavascript.content;
-        document.body.appendChild(script);
-    } else {
-        setTimeout(injectSettingsJavascript, 100);
     }
 }
 
@@ -144,7 +133,6 @@ function changeContentVisiblity(hide) {
 }
 
 function pollSearchHistory() {
-    let topbarSearch = document.getElementsByClassName('topbar-search')[0];
     let searchCategory = document.getElementsByClassName('search-category')[0]
     if (searchCategory != null) {
         bindLinks();
@@ -153,24 +141,4 @@ function pollSearchHistory() {
     }
 }
 
-// Fills property content of objectWrapper data with file contents.
-function readFile(file, objectWrapper) {
-    let filepath = path.join(__dirname, file);
-    fs.readFile(filepath, 'utf-8', (err, data) => {
-        if (err) {
-            console.error("An error while trying to read a file occured ", err);
-            objectWrapper.content = "error";
-            return;
-        }
-
-        objectWrapper.content = data;
-    });
-}
-
-// Workaround to achieve pointer-like behavior
-let settingsJavascript = { content: null };
-let settingsElement = { content: null };
-let settings = { content: null };
-readFile('settings-element.html', settingsElement);
-readFile('settings.html', settings);
-pollTopbar(settingsElement, settings);
+pollTopbar();

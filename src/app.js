@@ -1,4 +1,4 @@
-const { Window } = require('./utils/window');
+const Window = require('./utils/window');
 const Player = require('mpris-service');
 const electron = require('electron');
 const { app, globalShortcut, session, ipcMain } = electron;
@@ -126,8 +126,8 @@ class Deezer {
             };
         });
         // To initialize settings graphically
-        ipcMain.on("requestSettings", (event, arg) => {
-            event.sender.send("receiveSettings", this.settings.preferences);
+        ipcMain.handle("requestSettings", async (event, arg) => {
+            return this.settings.preferences;
         });
         // To set setting whenever there is a change
         ipcMain.on("setSetting", (event, key, value) => {

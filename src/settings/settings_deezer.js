@@ -16,13 +16,11 @@ if (content != null) {
 let optimizeAppLabel = document.getElementById('optimizeApp');
 let closeToTrayLabel = document.getElementById("closeToTray");
 
-ipcRenderer.send("requestSettings")
-
-ipcRenderer.on("receiveSettings", (event, arg) => {
-    if (arg.closeToTray == 'true') {
+ipcRenderer.invoke("requestSettings").then((data) => {
+    if (data.closeToTray == 'true') {
         closeToTrayLabel.classList.add('is-checked');
     }
-    if (arg.optimizeApp == 'true') {
+    if (data.optimizeApp == 'true') {
         optimizeAppLabel.classList.add('is-checked');
     }
 });
