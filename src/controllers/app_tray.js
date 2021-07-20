@@ -10,6 +10,8 @@ class AppTray {
         this.tray = Tray(trayIcon);
         this.window = window;
         this.db = db;
+
+        this.updateTray();
     }
 
     updateTray() {
@@ -35,7 +37,9 @@ class AppTray {
             label: "Unfavourite/Favourite",
             enabled: true,
             click: () => {
-                this.window.webContents.executeJavaScript("document.querySelectorAll('.mpris.player-bottom .track-actions button')[2].click();");
+                this.window.webContents.executeJavaScript(" \
+                actions = document.getElementsByClassName('track-actions')[0].getElementsByTagName('button'); \
+                actions[actions.length - 1].click();");
             }
         }, {
             label: "Volume UP",
