@@ -53,7 +53,7 @@ class Deezer {
         this.dbWrapper.db.findOne({}, (err, data) => {
             err && console.warn(err.message)
             this.dbWrapper.setData(data);
-            this.win = new Window(app, this.dbWrapper.url, electron.screen.getPrimaryDisplay().workAreaSize, this.settings);
+            this.win = new Window(app, this, electron.screen.getPrimaryDisplay().workAreaSize);
             this.dbWrapper.setWindow(this.win);
             this.registerMediaKeys();
             this.tray = new AppTray(this.win, this.dbWrapper);
@@ -132,11 +132,6 @@ class Deezer {
         // To set setting whenever there is a change
         ipcMain.on("setSetting", (event, key, value) => {
             this.settings.setAttribute(key, value)
-        });
-        ipcMain.on("quit", () => {
-            this.dbWrapper.saveData();
-            this.win.destroy()
-            app.quit()
         });
     }
 }

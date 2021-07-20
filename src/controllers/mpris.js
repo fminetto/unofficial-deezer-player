@@ -52,13 +52,13 @@ class Mpris {
             var value = dzPlayer.getPosition()
             electron.ipcRenderer.send('readDZCurPosition', value)`);
         };
-    }
 
-    bindEvents() {
         this.player.on('quit', function () {
             process.exit();
         });
+    }
 
+    bindEvents() {
         // MPRIS side actions
         this.player.on('pause', function () {
             this.win.webContents.executeJavaScript("dzPlayer.control.pause();");

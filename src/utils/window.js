@@ -3,7 +3,7 @@ const { BrowserWindow, dialog } = require('electron');
 const LazyReader = require('./lazy_reader');
 
 class Window extends BrowserWindow {
-    constructor(app, url, { width, height }, settings) {
+    constructor(app, parent, { width, height }) {
         let params = {
             width,
             height,
@@ -20,14 +20,14 @@ class Window extends BrowserWindow {
             show: false
         };
         super(params);
-        this.setMenuBarVisibility(false);
-        this.loadURL(url || "https://deezer.com", { userAgent: process.env.userAgent });
         this.app = app;
-        this.settings = settings;
+        this.parent = parent;
+        this.setMenuBarVisibility(false);
+        this.loadURL(this.parent.dbWrapper.url || "https://deezer.com", { userAgent: process.env.userAgent });   
         this.createEvents();
         
         this.setOptimize();
-        this.settings.setCallback("optimizeApp", () => {
+        this.parent.settings.setCallback("optimizeApp", () => {
             this.setOptimize();
         });
     }
@@ -46,18 +46,20 @@ class Window extends BrowserWindow {
             this.show();
         })
         this.on("close", event => {
-            if (this.settings.getAttribute("closeToTray") == "true") {
+            if (this.parent.settings.getAttribute("closeToTray") == "true") {
                 event.preventDefault();
                 this.hide();
                 return false;
             } else {
-                this.webContents.send("quit");
+                this.parent.dbWrapper.saveData();
+                this.destroy();
+                this.app.quit();
             }
         })
     }
 
     setOptimize() {
-        if (this.settings.getAttribute("optimizeApp") == 'true') {
+        if (this.parent.settings.getAttribute("optimizeApp") == 'true') {
             this.addListener("blur", this.blurWindow);
             this.addListener("focus", this.focusWindow);
         } else {
