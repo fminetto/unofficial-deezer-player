@@ -73,7 +73,7 @@ function initSettingsJavacript() {
             }
 
             // Create script that takes care of settings    
-            readFile("settings-deezer.js", settingsJavascript);
+            readFile("settings_deezer.js", settingsJavascript);
             injectSettingsJavascript();
 
             // If user clicks on profile and generates more <a> tags, we need to hook those new as well

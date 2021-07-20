@@ -1,328 +1,144 @@
-const path = require('path'),
-    Datastore = require('nedb'),
-    fs = require('fs'),
-    { Window } = require('./utils/window'),
-    { Settings } = require('./settings/settings'),
-    consvol = 0.10,
-    Player = require('mpris-service'),
-    electron = require('electron'),
-    { app, Menu, Tray, globalShortcut, session, ipcMain } = electron,
-    trayicon = path.join(__dirname, 'assets', 'dist_icon.png');
+const { Window } = require('./utils/window');
+const Player = require('mpris-service');
+const electron = require('electron');
+const { app, globalShortcut, session, ipcMain } = electron;
+const Settings = require('./controllers/settings');
+const DbWrapper = require('./controllers/db_wrapper');
+const AppTray = require('./controllers/app_tray');
+const Mpris = require('./controllers/mpris');
+
 process.env.userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36';
 app.commandLine.appendSwitch('disable-features', 'MediaSessionService');
 
-let cfgId, is_optimized = false, url, win, tray, db = new Datastore({ filename: `${app.getPath('userData')}/deezer.db`, autoload: true });
+const gotTheLock = app.requestSingleInstanceLock();
 
-let settings = new Settings();
-
-let singleton = null
-const player = Player({
-    name: 'Deezer',
-    identity: 'Deezer media player',
-    supportedUriSchemes: [],
-    supportedMimeTypes: [],
-    supportedInterfaces: ['player']
-})
-
-async function createWin() {
-    session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
-        details.requestHeaders['User-Agent'] = process.env.userAgent;
-        callback({ cancel: false, requestHeaders: details.requestHeaders })
-    });
-    db.findOne({}, (err, data) => {
-        err && console.warn(err.message)
-        if (data) {
-            url = data.loadURL
-            cfgId = data._id
-            is_optimized = data.optimize
-            if (url.indexOf("deezer.com") < 0) url = undefined
-        }
-        tray = new Tray(trayicon)
-        win = new Window(app, url, electron.screen.getPrimaryDisplay().workAreaSize, settings);
-        singleton = win;
-        registerMediaKeys();
-        updateTray();
-        initPlayerMpris();
-    })
-}
-
-function registerMediaKeys() {
-    if (!globalShortcut.isRegistered("medianexttrack"))
-        globalShortcut.register('medianexttrack', () => {
-            win.webContents.executeJavaScript("dzPlayer.control.nextSong()");
-        });
-    if (!globalShortcut.isRegistered("mediaplaypause"))
-        globalShortcut.register('mediaplaypause', () => {
-            win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
-        });
-    if (!globalShortcut.isRegistered("mediaprevioustrack"))
-        globalShortcut.register('mediaprevioustrack', () => {
-            win.webContents.executeJavaScript("dzPlayer.control.prevSong()");
-        });
-}
-
-function updateTray() {
-    let model = [{
-        label: "Controls",
-        enabled: false
-    }, {
-        label: "Play/Pause",
-        enabled: true,
-        click: () => {
-            win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
-        }
-    }, {
-        label: "Next",
-        enabled: true,
-        click: () => {
-            win.webContents.executeJavaScript("dzPlayer.control.nextSong()");
-        }
-    }, {
-        label: "Previous",
-        enabled: true,
-        click: () => {
-            win.webContents.executeJavaScript("dzPlayer.control.prevSong()");
-        }
-    }, {
-        label: "Unfavourite/Favourite",
-        enabled: true,
-        click: () => {
-            win.webContents.executeJavaScript("document.querySelectorAll('.player-bottom .track-actions button')[2].click();");
-        }
-    }, {
-        label: "Volume",
-        enabled: false
-    }, {
-        label: "Volume UP",
-        enabled: true,
-        click: () => {
-            win.webContents.executeJavaScript(`vol = dzPlayer.volume; vol += ${consvol}; vol > 1 && (vol = 1); dzPlayer.control.setVolume(vol);`)
-        }
-    }, {
-        label: "Volume Down",
-        enabled: true,
-        click: () => {
-            win.webContents.executeJavaScript(`vol = dzPlayer.volume; vol -= ${consvol}; vol < 0 && (vol = 0); dzPlayer.control.setVolume(vol);`)
-        }
-    }, {
-        label: "Volume Mute",
-        enabled: true,
-        click: () => {
-            win.webContents.executeJavaScript("dzPlayer.control.mute(!dzPlayer.muted)")
-        }
-    }, {
-        label: "APP",
-        enabled: false
-    }, {
-        label: "Optimize app",
-        type : "checkbox",
-        checked : is_optimized,
-        enabled: true,
-        click: event => {
-            is_optimized = event.checked;
-            win.set_optimize(is_optimized);
-            saveData();
-        }
-    }, {
-        label: "Quit",
-        enabled: true,
-        click: () => {
-            saveData();
-            win.destroy()
+class Deezer {
+    constructor() {
+        // Single instance lock
+        if (!gotTheLock) {
             app.quit()
+        } else {
+            app.on('second-instance', (event, commandLine, workingDirectory) => {
+                // Someone tried to run a second instance, we should focus our window.
+                if (this.win) {
+                    if (this.win.isMinimized() || !this.win.isVisible()) this.win.restore();
+                    this.win.focus();
+                }
+            })
+
+            this.init();
+            app.on('ready', () => {
+                this.createWin();
+            });
         }
-    }];
-    tray.on("click", () => {
-        if (!win.isVisible())
-            win.restore();
-        else
-            win.hide();
-    })
-    tray.setContextMenu(new Menu.buildFromTemplate(model))
-}
 
-const gotTheLock = app.requestSingleInstanceLock()
-
-if (!gotTheLock) {
-    app.quit()
-} else {
-    app.on('second-instance', (event, commandLine, workingDirectory) => {
-        // Someone tried to run a second instance, we should focus our window.
-        if (singleton) {
-            if (singleton.isMinimized() || !singleton.isVisible()) singleton.restore()
-            singleton.focus()
-        }
-    })
-
-    app.on('ready', createWin)
-}
-
-app.on('browser-window-created', (e, window) => {
-    window.setMenuBarVisibility(false);
-})
-
-function initPlayerMpris() {
-    // Start at position 0
-    player.seeked(0);
-    // Bind the deezer events to the mpris datas
-    win.webContents.executeJavaScript(`
-      var electron = require('electron')
-      Events.subscribe(Events.player.playerReady, function(){
-          electron.ipcRenderer.send('readDZCurSong', dzPlayer.getCurrentSong())
-      })
-      Events.subscribe(Events.player.updateCurrentTrack, function(){
-          electron.ipcRenderer.send('readDZCurSong', dzPlayer.getCurrentSong())
-      })
-      Events.subscribe(Events.player.trackChange, function(){
-          electron.ipcRenderer.send('readDZCurSong', dzPlayer.getCurrentSong())
-      })
-      Events.subscribe(Events.player.playing, function(){
-          electron.ipcRenderer.send('readDZPlaying', dzPlayer.isPlaying())
-          electron.ipcRenderer.send('readDZCurSong', dzPlayer.getCurrentSong())
-      })
-      Events.subscribe(Events.player.volume_changed, function(){
-          electron.ipcRenderer.send('readDZVolume', dzPlayer.getVolume())
-      })
-      Events.subscribe(Events.player.shuffle_changed, function(){
-          electron.ipcRenderer.send('readDZShuffle', dzPlayer.shuffle)
-      })
-      Events.subscribe(Events.player.repeat_changed, function(){
-          electron.ipcRenderer.send('readDZRepeat', dzPlayer.getRepeat())
-      })
-      `);
-    // The function used to know when to read the Deezer track position
-    player.getPosition = function() {
-      win.webContents.executeJavaScript(`
-        var electron = require('electron')
-        var value = dzPlayer.getPosition()
-        electron.ipcRenderer.send('readDZCurPosition', value)`);
-    };
-
-    player.on('quit', function () {
-        process.exit();
-    });
-}
-
-// MPRIS side actions
-player.on('pause', function () {
-    win.webContents.executeJavaScript("dzPlayer.control.pause();");
-})
-player.on('play', function () {
-    win.webContents.executeJavaScript("dzPlayer.control.play();");
-})
-player.on('playpause', function () {
-    win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
-})
-player.on('loopStatus', function () {
-    var repeat_status;
-    switch(player.loopStatus){
-        case "None":
-            player.loopStatus = "Playlist";
-            repeat_status = 1;
-            break;
-        case "Playlist":
-            player.loopStatus = "Track";
-            repeat_status = 2;
-            break;
-        case "Track":
-            player.loopStatus = "None";
-            repeat_status = 0;
-            break;
-    };
-    win.webContents.executeJavaScript(`dzPlayer.control.setRepeat(${repeat_status});`);
-})
-player.on('shuffle', function () {
-    var shuffle_status = arguments['0'];
-    player.shuffle = shuffle_status;
-    win.webContents.executeJavaScript(`dzPlayer.control.setShuffle(${shuffle_status});`);
-})
-player.on('next', function () {
-    win.webContents.executeJavaScript("dzPlayer.control.nextSong();");
-})
-player.on('previous', function () {
-    win.webContents.executeJavaScript("dzPlayer.control.prevSong();");
-})
-player.on('volume', function () {
-    win.webContents.executeJavaScript(`dzPlayer.control.setVolume(${arguments['0']});`);
-})
-player.on('position', function () {
-    var cur_pos = arguments['0']['position'];
-    var length = player.metadata['mpris:length'];
-    win.webContents.executeJavaScript(`dzPlayer.control.seek(${cur_pos/length});`);
-})
-
-// Deezer side actions
-ipcMain.on('readDZCurSong', function(event, data){
-  var song = data;
-  var artists = [];
-  if ('ARTISTS' in song) {
-      song['ARTISTS'].forEach(function(artist){
-          artists.push(artist['ART_NAME']);
-      });
-  }else {
-      artists = [song['ART_NAME']];
-  }
-  player.metadata = {
-      'mpris:trackid': player.objectPath('track/0'),
-      'mpris:length': song['DURATION'] * 1000 * 1000, // In microseconds
-      'mpris:artUrl': 'https://e-cdns-images.dzcdn.net/images/cover/'+song['ALB_PICTURE']+'/380x380-000000-80-0-0.jpg',
-      'xesam:title': song['SNG_TITLE'],
-      'xesam:album': song['ALB_TITLE'],
-      'xesam:artist': artists
-  };
-});
-ipcMain.on('readDZCurPosition', function(event, data){
-  player.seeked(data * 1000 * 1000);
-});
-ipcMain.on('readDZPlaying', function(event, data){
-  if (data)
-    player.playbackStatus = Player.PLAYBACK_STATUS_PLAYING;
-  else
-    player.playbackStatus = Player.PLAYBACK_STATUS_PAUSED;
-});
-ipcMain.on('readDZVolume', function(event, data){
-  player.volume = data;
-});
-ipcMain.on('readDZShuffle', function(event, data){
-  player.shuffle = data;
-});
-ipcMain.on('readDZRepeat', function(event, data){
-  switch(data){
-      case 0:
-          player.loopStatus = "None";
-          break;
-      case 1:
-          player.loopStatus = "Playlist";
-          break;
-      case 2:
-          player.loopStatus = "Track";
-          break;
-  };
-});
-// To initialize settings graphically
-ipcMain.on("requestSettings", (event, arg) => {
-    event.sender.send("receiveSettings", settings.preferences);
-});
-// To set setting whenever there is a change
-ipcMain.on("setSetting", (event, key, value) => {
-    settings.setAttribute(key, value)
-});
-ipcMain.on("quit", () => {
-    saveData();
-    win.destroy()
-    app.quit()
-});
-
-async function saveData() {
-    if (cfgId) {
-        await db.update({
-            _id: cfgId
-        }, {
-            $set: {
-                loadURL: win.webContents.getURL(), optimize: is_optimized
-            }
+        app.on('browser-window-created', (e, window) => {
+            window.setMenuBarVisibility(false);
         })
-    } else {
-        await db.insert({ loadURL: win.webContents.getURL(), optimize: is_optimized })
+    }
+
+    init() {
+        this.settings = new Settings();
+        this.dbWrapper = new DbWrapper();
+        this.tray = null;
+        this.win = null;
+        this.mpris = null;
+    }
+
+    async createWin() {
+        session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+            details.requestHeaders['User-Agent'] = process.env.userAgent;
+            callback({ cancel: false, requestHeaders: details.requestHeaders })
+        });
+        this.dbWrapper.db.findOne({}, (err, data) => {
+            err && console.warn(err.message)
+            this.dbWrapper.setData(data);
+            this.win = new Window(app, this.dbWrapper.url, electron.screen.getPrimaryDisplay().workAreaSize, this.settings);
+            this.dbWrapper.setWindow(this.win);
+            this.registerMediaKeys();
+            this.tray = new AppTray(this.win, this.dbWrapper);
+            this.mpris = new Mpris(this.win);
+            this.initIPC()
+        })
+    }
+
+    registerMediaKeys() {
+        if (!globalShortcut.isRegistered("medianexttrack"))
+            globalShortcut.register('medianexttrack', () => {
+                win.webContents.executeJavaScript("dzPlayer.control.nextSong()");
+            });
+        if (!globalShortcut.isRegistered("mediaplaypause"))
+            globalShortcut.register('mediaplaypause', () => {
+                win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
+            });
+        if (!globalShortcut.isRegistered("mediaprevioustrack"))
+            globalShortcut.register('mediaprevioustrack', () => {
+                win.webContents.executeJavaScript("dzPlayer.control.prevSong()");
+            });
+    }
+
+    initIPC() {
+        ipcMain.on('readDZCurSong', (event, data) => {
+            var song = data;
+            var artists = [];
+            if ('ARTISTS' in song) {
+                song['ARTISTS'].forEach(function (artist) {
+                    artists.push(artist['ART_NAME']);
+                });
+            } else {
+                artists = [song['ART_NAME']];
+            }
+            this.mpris.player.metadata = {
+                'mpris:trackid': this.mpris.player.objectPath('track/0'),
+                'mpris:length': song['DURATION'] * 1000 * 1000, // In microseconds
+                'mpris:artUrl': 'https://e-cdns-images.dzcdn.net/images/cover/' + song['ALB_PICTURE'] + '/380x380-000000-80-0-0.jpg',
+                'xesam:title': song['SNG_TITLE'],
+                'xesam:album': song['ALB_TITLE'],
+                'xesam:artist': artists
+            };
+        });
+        ipcMain.on('readDZCurPosition', (event, data) => {
+            this.mpris.player.seeked(data * 1000 * 1000);
+        });
+        ipcMain.on('readDZPlaying', (event, data) => {
+            if (data)
+                this.mpris.player.playbackStatus = Player.PLAYBACK_STATUS_PLAYING;
+            else
+                this.mpris.player.playbackStatus = Player.PLAYBACK_STATUS_PAUSED;
+        });
+        ipcMain.on('readDZVolume', (event, data) => {
+            this.mpris.player.volume = data;
+        });
+        ipcMain.on('readDZShuffle', (event, data) => {
+            this.mpris.player.shuffle = data;
+        });
+        ipcMain.on('readDZRepeat', (event, data) => {
+            switch (data) {
+                case 0:
+                    this.mpris.player.loopStatus = "None";
+                    break;
+                case 1:
+                    this.mpris.player.loopStatus = "Playlist";
+                    break;
+                case 2:
+                    this.mpris.player.loopStatus = "Track";
+                    break;
+            };
+        });
+        // To initialize settings graphically
+        ipcMain.on("requestSettings", (event, arg) => {
+            event.sender.send("receiveSettings", this.settings.preferences);
+        });
+        // To set setting whenever there is a change
+        ipcMain.on("setSetting", (event, key, value) => {
+            this.settings.setAttribute(key, value)
+        });
+        ipcMain.on("quit", () => {
+            this.dbWrapper.saveData();
+            this.win.destroy()
+            app.quit()
+        });
     }
 }
+
+new Deezer();

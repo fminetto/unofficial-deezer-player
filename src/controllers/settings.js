@@ -4,9 +4,9 @@ const { app } = require('electron');
 
 const filename = "preferences.json";
 
-// Defaults
 const defaults = {
-    closeToTray: 'true'
+    closeToTray: 'true',
+    optimizeApp: 'false'
 }
 
 class Settings {
@@ -66,4 +66,4 @@ class Settings {
     }
 }
 
-module.exports = { Settings };
+module.exports = Settings;

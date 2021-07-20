@@ -13,12 +13,17 @@ if (content != null) {
 }
 
 // Initialize values based on settings
+let optimizeAppLabel = document.getElementById('optimizeApp');
 let closeToTrayLabel = document.getElementById("closeToTray");
-let closeToTray = ipcRenderer.send("requestSettings")
+
+ipcRenderer.send("requestSettings")
 
 ipcRenderer.on("receiveSettings", (event, arg) => {
     if (arg.closeToTray == 'true') {
         closeToTrayLabel.classList.add('is-checked');
+    }
+    if (arg.optimizeApp == 'true') {
+        optimizeAppLabel.classList.add('is-checked');
     }
 });
 
@@ -26,4 +31,8 @@ ipcRenderer.on("receiveSettings", (event, arg) => {
 closeToTrayLabel.addEventListener('click', function (e) {
     ipcRenderer.send("setSetting", "closeToTray",
         closeToTrayLabel.classList.contains('is-checked') ? "true" : "false");
+});
+optimizeAppLabel.addEventListener('click', function(e) {
+    ipcRenderer.send("setSetting", "optimizeApp", 
+        optimizeAppLabel.classList.contains('is-checked') ? "true" : "false");
 });
