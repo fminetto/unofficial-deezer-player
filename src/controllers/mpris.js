@@ -46,32 +46,35 @@ class Mpris {
       `);
 
         // The function used to know when to read the Deezer track position
-        this.player.getPosition = function () {
+        this.player.getPosition = () => {
             this.win.webContents.executeJavaScript(`
             var electron = require('electron')
             var value = dzPlayer.getPosition()
             electron.ipcRenderer.send('readDZCurPosition', value)`);
         };
 
-        this.player.on('quit', function () {
+        this.player.on('quit', () => {
             process.exit();
         });
     }
 
     bindEvents() {
+        console.log("preparing evetns");
         // MPRIS side actions
-        this.player.on('pause', function () {
+        this.player.on('pause', () => {
+        console.log("pasugin");
+
             this.win.webContents.executeJavaScript("dzPlayer.control.pause();");
         })
-        this.player.on('play', function () {
+        this.player.on('play', () => {
             this.win.webContents.executeJavaScript("dzPlayer.control.play();");
         })
-        this.player.on('playpause', function () {
+        this.player.on('playpause', () => {
             this.win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
         })
-        this.player.on('loopStatus', function () {
-            var repeat_status;
-            switch (player.loopStatus) {
+        this.player.on('loopStatus', () => {
+            let repeat_status;
+            switch (this.player.loopStatus) {
                 case "None":
                     this.player.loopStatus = "Playlist";
                     repeat_status = 1;
@@ -87,23 +90,23 @@ class Mpris {
             };
             this.win.webContents.executeJavaScript(`dzPlayer.control.setRepeat(${repeat_status});`);
         })
-        this.player.on('shuffle', function () {
-            var shuffle_status = arguments['0'];
+        this.player.on('shuffle', () => {
+            let shuffle_status = arguments['0'];
             this.player.shuffle = shuffle_status;
             this.win.webContents.executeJavaScript(`dzPlayer.control.setShuffle(${shuffle_status});`);
         })
-        this.player.on('next', function () {
+        this.player.on('next', () => {
             this.win.webContents.executeJavaScript("dzPlayer.control.nextSong();");
         })
-        this.player.on('previous', function () {
+        this.player.on('previous', () => {
             this.win.webContents.executeJavaScript("dzPlayer.control.prevSong();");
         })
-        this.player.on('volume', function () {
+        this.player.on('volume', () => {
             this.win.webContents.executeJavaScript(`dzPlayer.control.setVolume(${arguments['0']});`);
         })
-        this.player.on('position', function () {
-            var cur_pos = arguments['0']['position'];
-            var length = this.player.metadata['mpris:length'];
+        this.player.on('position', () => {
+            let cur_pos = arguments['0']['position'];
+            let length = this.player.metadata['mpris:length'];
             this.win.webContents.executeJavaScript(`dzPlayer.control.seek(${cur_pos / length});`);
         })
     }

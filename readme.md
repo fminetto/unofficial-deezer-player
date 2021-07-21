@@ -10,6 +10,7 @@ A unofficial Deezer player for Linux.
 * Background music play
 * Media keys support
 * Connection check
+* Custom settings
 
 # Build Instructions
 

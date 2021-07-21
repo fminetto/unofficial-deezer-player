@@ -26,9 +26,9 @@ class Window extends BrowserWindow {
         this.loadURL(this.parent.dbWrapper.url || "https://deezer.com", { userAgent: process.env.userAgent });   
         this.createEvents();
         
-        this.setOptimize();
+        this.checkOptimize();
         this.parent.settings.setCallback("optimizeApp", () => {
-            this.setOptimize();
+            this.checkOptimize();
         });
     }
 
@@ -58,7 +58,7 @@ class Window extends BrowserWindow {
         })
     }
 
-    setOptimize() {
+    checkOptimize() {
         if (this.parent.settings.getAttribute("optimizeApp") == 'true') {
             this.addListener("blur", this.blurWindow);
             this.addListener("focus", this.focusWindow);
@@ -68,6 +68,8 @@ class Window extends BrowserWindow {
             if (this.blur) {
                 this.focusWindow();
             }
+            LazyReader.unload(path.join("..", "optimization", "blur.js"));
+            LazyReader.unload(path.join("..", "optimization", "focus.js"));
         }
     }
 

@@ -63,17 +63,19 @@ class Deezer {
     }
 
     registerMediaKeys() {
+        console.log("Registering media keys");
         if (!globalShortcut.isRegistered("medianexttrack"))
             globalShortcut.register('medianexttrack', () => {
-                win.webContents.executeJavaScript("dzPlayer.control.nextSong()");
+                console.log("keybind works");
+                this.win.webContents.executeJavaScript("dzPlayer.control.nextSong()");
             });
         if (!globalShortcut.isRegistered("mediaplaypause"))
             globalShortcut.register('mediaplaypause', () => {
-                win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
+                this.win.webContents.executeJavaScript("dzPlayer.control.togglePause();");
             });
         if (!globalShortcut.isRegistered("mediaprevioustrack"))
             globalShortcut.register('mediaprevioustrack', () => {
-                win.webContents.executeJavaScript("dzPlayer.control.prevSong()");
+                this.win.webContents.executeJavaScript("dzPlayer.control.prevSong()");
             });
     }
 
