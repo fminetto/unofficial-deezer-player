@@ -63,10 +63,8 @@ class Deezer {
     }
 
     registerMediaKeys() {
-        console.log("Registering media keys");
         if (!globalShortcut.isRegistered("medianexttrack"))
             globalShortcut.register('medianexttrack', () => {
-                console.log("keybind works");
                 this.win.webContents.executeJavaScript("dzPlayer.control.nextSong()");
             });
         if (!globalShortcut.isRegistered("mediaplaypause"))

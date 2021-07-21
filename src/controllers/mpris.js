@@ -59,11 +59,8 @@ class Mpris {
     }
 
     bindEvents() {
-        console.log("preparing evetns");
         // MPRIS side actions
         this.player.on('pause', () => {
-        console.log("pasugin");
-
             this.win.webContents.executeJavaScript("dzPlayer.control.pause();");
         })
         this.player.on('play', () => {
