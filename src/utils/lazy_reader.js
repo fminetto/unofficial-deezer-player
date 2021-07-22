@@ -45,12 +45,12 @@ class LazyReader {
     static asyncLoading(file, callback, useCache) {
         if (file in this.files) {
             callback(this.files[file]);
-            if (!useCache) {
+            if (useCache === false) {
                 this.unload(file);
             }
         } else {
             setTimeout(() => { 
-                LazyReader.asyncLoading(file, callback);
+                LazyReader.asyncLoading(file, callback, useCache);
             }, 100);
         }
     }
