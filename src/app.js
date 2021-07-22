@@ -58,7 +58,7 @@ class Deezer {
             this.registerMediaKeys();
             this.tray = new AppTray(this.win, this.dbWrapper);
             this.mpris = new Mpris(this.win);
-            this.initIPC()
+            this.initIPC();
         })
     }
 
