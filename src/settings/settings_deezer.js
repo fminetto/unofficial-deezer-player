@@ -25,12 +25,12 @@ ipcRenderer.invoke("requestSettings").then((data) => {
     }
 });
 
-// All the settings...
-closeToTrayLabel.addEventListener('click', function (e) {
+// All the settings... Yes, you must bind it to input, otherwise function gets called twice!
+closeToTrayLabel.getElementsByTagName('input')[0].addEventListener('click', function (e) {
     ipcRenderer.send("setSetting", "closeToTray",
         closeToTrayLabel.classList.contains('is-checked') ? "true" : "false");
 });
-optimizeAppLabel.addEventListener('click', function(e) {
+optimizeAppLabel.getElementsByTagName('input')[0].addEventListener('click', function(e) {
     ipcRenderer.send("setSetting", "optimizeApp", 
         optimizeAppLabel.classList.contains('is-checked') ? "true" : "false");
 });
