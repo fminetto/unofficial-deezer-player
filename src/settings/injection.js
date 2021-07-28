@@ -126,8 +126,8 @@ function changeContentVisiblity(hide) {
     let visibility = hide ? 'none' : '';
     let pageContent = document.getElementById('page_content');
     for (let i = 0, len = pageContent.childElementCount; i < len; i++) {
-        if (pageContent.childNodes[i].id != "app_settings") {
-            pageContent.childNodes[i].style.display = visibility;
+        if (pageContent.children[i].id != "app_settings") {
+            pageContent.children[i].style.display = visibility;
         }
     }
 }
