@@ -16,8 +16,6 @@ class Mpris {
     }
 
     initMprisPlayer() {
-        // Start at position 0
-        this.player.seeked(0);
         // Bind the deezer events to the mpris datas
         this.win.webContents.executeJavaScript(`
             var electron = require('electron')
@@ -46,6 +44,7 @@ class Mpris {
       `);
 
         // The function used to know when to read the Deezer track position
+        // NOT WORKING CURRENTLY!!! TOO BIG HASSLE WITH ASYNCHRONOUS JAVASCRIPT
         this.player.getPosition = () => {
             this.win.webContents.executeJavaScript(`
             var electron = require('electron')
@@ -101,11 +100,20 @@ class Mpris {
         this.player.on('volume', () => {
             this.win.webContents.executeJavaScript(`dzPlayer.control.setVolume(${arguments['0']});`);
         })
-        this.player.on('position', () => {
-            let cur_pos = arguments['0']['position'];
-            let length = this.player.metadata['mpris:length'];
-            this.win.webContents.executeJavaScript(`dzPlayer.control.seek(${cur_pos / length});`);
+        // For setting the exact position(for example): playerctl position 10
+        this.player.on('position', (event) => {
+            // Track ID should match (currently they would always match)
+            let position = event.position / 1000000;
+            let length = this.player.metadata['mpris:length'] / 1000000;
+            this.win.webContents.executeJavaScript(`dzPlayer.control.seek(${position / length});`);
         })
+        // For setting the position(for example): playerctl position 10+
+        this.player.on('seek', (offset) => {
+            // Note that offset may be negative
+            offset /= 1000000
+            let length = this.player.metadata['mpris:length'] / 1000000;
+            this.win.webContents.executeJavaScript(`dzPlayer.control.seek((dzPlayer.getPosition() + ${offset}) / ${length});`);
+        });
     }
 }
 
