@@ -3,6 +3,10 @@ const Player = require('mpris-service');
 class Mpris {
     constructor(win) {
         this.win = win
+        // To obtain current position
+        this.songStart;
+        this.songOffset;
+
         this.player = Player({
             name: 'Deezer',
             identity: 'Deezer media this.player',
@@ -21,16 +25,20 @@ class Mpris {
             var electron = require('electron')
             Events.subscribe(Events.player.playerReady, function(){
                 electron.ipcRenderer.send('readDZCurSong', dzPlayer.getCurrentSong())
+                electron.ipcRenderer.send('readDZCurPosition', dzPlayer.getPosition());
             })
             Events.subscribe(Events.player.updateCurrentTrack, function(){
                 electron.ipcRenderer.send('readDZCurSong', dzPlayer.getCurrentSong())
+                electron.ipcRenderer.send('readDZCurPosition', dzPlayer.getPosition());
             })
             Events.subscribe(Events.player.trackChange, function(){
                 electron.ipcRenderer.send('readDZCurSong', dzPlayer.getCurrentSong())
+                electron.ipcRenderer.send('readDZCurPosition', dzPlayer.getPosition());
             })
             Events.subscribe(Events.player.playing, function(){
                 electron.ipcRenderer.send('readDZPlaying', dzPlayer.isPlaying())
                 electron.ipcRenderer.send('readDZCurSong', dzPlayer.getCurrentSong())
+                electron.ipcRenderer.send('readDZCurPosition', dzPlayer.getPosition());
             })
             Events.subscribe(Events.player.volume_changed, function(){
                 electron.ipcRenderer.send('readDZVolume', dzPlayer.getVolume())
@@ -44,12 +52,12 @@ class Mpris {
       `);
 
         // The function used to know when to read the Deezer track position
-        // NOT WORKING CURRENTLY!!! TOO BIG HASSLE WITH ASYNCHRONOUS JAVASCRIPT
+        // We have no clue about the position, but we can calculate that easily by knowing
+        // the time when the song started and knowing the time of asking for the position
+        // Seeking a position moves the offset
         this.player.getPosition = () => {
-            this.win.webContents.executeJavaScript(`
-            var electron = require('electron')
-            var value = dzPlayer.getPosition()
-            electron.ipcRenderer.send('readDZCurPosition', value)`);
+            let songCurrent = new Date();
+            return (songCurrent - this.songStart) * 1000 + this.songOffset;
         };
 
         this.player.on('quit', () => {

@@ -98,7 +98,8 @@ class Deezer {
             };
         });
         ipcMain.on('readDZCurPosition', (event, data) => {
-            this.mpris.player.seeked(data * 1000 * 1000);
+            this.mpris.songStart = new Date();
+            this.mpris.songOffset = data * 1000 * 1000;
         });
         ipcMain.on('readDZPlaying', (event, data) => {
             if (data)
