@@ -57,6 +57,9 @@ class Mpris {
         // Seeking a position moves the offset
         this.player.getPosition = () => {
             let songCurrent = new Date();
+            if (this.player.playbackStatus == Player.PLAYBACK_STATUS_PAUSED) {
+                return this.songOffset;
+            }
             return (songCurrent - this.songStart) * 1000 + this.songOffset;
         };
 
